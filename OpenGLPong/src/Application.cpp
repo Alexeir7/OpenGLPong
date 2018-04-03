@@ -197,6 +197,7 @@ int main(void)
 		unsigned int vertexProjection = glGetUniformLocation(shaderProgram, "projection");
 		glUniformMatrix4fv(vertexProjection, 1, GL_FALSE, &projectionMatrix[0][0]);
 
+		// set translation matrix
 		glm::mat4 translateMatrix = glm::mat4(1.0f);
 		translateMatrix = glm::translate(translateMatrix, glm::vec3(0.0f, (float)move, 0.0f));
 		unsigned int vertexTranslate = glGetUniformLocation(shaderProgram, "translate");
