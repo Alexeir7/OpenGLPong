@@ -2,6 +2,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
 
@@ -18,7 +19,8 @@ int racket_height = 175;
 int racket_speed = 1;
 
 // move
-int move = 0;
+int move1 = 0;
+int move2 = 0;
 
 // left racket
 float racket_left_x = 0.0f;
@@ -192,20 +194,25 @@ int main(void)
 
 		glUseProgram(shaderProgram);
 
-		// set projection matrix for position everything easily
+		// set projection matrix for positioning everything easily
 		glm::mat4 projectionMatrix = glm::ortho(0.0f, (float)WIDTH, 0.0f, (float)HEIGHT, 1.0f, -1.0f);
 		unsigned int vertexProjection = glGetUniformLocation(shaderProgram, "projection");
 		glUniformMatrix4fv(vertexProjection, 1, GL_FALSE, &projectionMatrix[0][0]);
 
 		// set translation matrix
 		glm::mat4 translateMatrix = glm::mat4(1.0f);
-		translateMatrix = glm::translate(translateMatrix, glm::vec3(0.0f, (float)move, 0.0f));
+		translateMatrix = glm::translate(translateMatrix, glm::vec3(0.0f, (float)move1, 0.0f));
 		unsigned int vertexTranslate = glGetUniformLocation(shaderProgram, "translate");
-		glUniformMatrix4fv(vertexTranslate, 1, GL_FALSE, &translateMatrix[0][0]);
+		glUniformMatrix4fv(vertexTranslate, 1, GL_FALSE, glm::value_ptr(translateMatrix));
 
 		// draw first racket
 		glBindVertexArray(VAO[0]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+		// translate second paddle
+		translateMatrix = glm::mat4(1.0f);
+		translateMatrix = glm::translate(translateMatrix, glm::vec3(0.0f, (float)move2, 0.0f));
+		glUniformMatrix4fv(vertexTranslate, 1, GL_FALSE, &translateMatrix[0][0]);
 
 		// draw second racket
 		glBindVertexArray(VAO[1]);
@@ -234,10 +241,32 @@ void processInput(GLFWwindow *window)
 		glfwSetWindowShouldClose(window, true);
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		move += racket_speed;
+	{
+		move1 += racket_speed;
+		if (move1 > 225)
+			move1 = 225;
+	}
 
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-		move -= racket_speed;
+	{
+		move1 -= racket_speed;
+		if (move1 < -225)
+			move1 = -225;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		move2 += racket_speed;
+		if (move2 > 225)
+			move2 = 225;
+	}
+
+	if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		move2 -= racket_speed;
+		if (move2 < -225)
+			move2 = -225;
+	}
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
