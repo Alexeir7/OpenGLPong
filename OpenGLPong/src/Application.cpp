@@ -17,6 +17,9 @@ int racket_width = 20;
 int racket_height = 175;
 int racket_speed = 1;
 
+// move
+int move = 0;
+
 // left racket
 float racket_left_x = 0.0f;
 float racket_left_y = (HEIGHT - racket_height)/2;
@@ -65,10 +68,11 @@ int main(void)
 		"layout(location = 0) in vec4 position;\n"
 		"\n"
 		"uniform mat4 projection;\n"
+		"uniform mat4 translate;\n"
 		"\n"
 		"void main()\n"
 		"{\n"
-		"gl_Position = projection * vec4(position.x, position.y, 0.0, 1.0);\n"
+		"gl_Position = projection * translate * vec4(position.x, position.y, 0.0, 1.0);\n"
 		"}\n\0";
 
 	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
@@ -193,11 +197,16 @@ int main(void)
 		unsigned int vertexProjection = glGetUniformLocation(shaderProgram, "projection");
 		glUniformMatrix4fv(vertexProjection, 1, GL_FALSE, &projectionMatrix[0][0]);
 
+		glm::mat4 translateMatrix = glm::mat4(1.0f);
+		translateMatrix = glm::translate(translateMatrix, glm::vec3(0.0f, (float)move, 0.0f));
+		unsigned int vertexTranslate = glGetUniformLocation(shaderProgram, "translate");
+		glUniformMatrix4fv(vertexTranslate, 1, GL_FALSE, &translateMatrix[0][0]);
+
 		// draw first racket
 		glBindVertexArray(VAO[0]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-		// draw first racket
+		// draw second racket
 		glBindVertexArray(VAO[1]);
 		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
@@ -224,7 +233,10 @@ void processInput(GLFWwindow *window)
 		glfwSetWindowShouldClose(window, true);
 
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-		racket_left_y += racket_speed;
+		move += racket_speed;
+
+	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+		move -= racket_speed;
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
