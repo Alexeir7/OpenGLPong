@@ -9,7 +9,7 @@ Basic 2 player pong game using [modern OpenGL](https://en.wikibooks.org/wiki/Ope
 1st player **W** and **S**
 2nd Player **UP ARROW** and **DOWN ARROW**
 
-##TODO
+## TODO
 - [x] create paddles
 - [x] transform paddles individually using input
 - [x] restrict paddle movement from the screen
