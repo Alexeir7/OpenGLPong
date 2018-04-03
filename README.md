@@ -1,10 +1,13 @@
 # OpenGLPong
 
-basic 2 player pong game using [modern OpenGL](https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Introduction), [GLFW](http://www.glfw.org/)  and [GLEW](http://glew.sourceforge.net/).
+I'm a noob at graphics and I'm slow at this 😟
+
+
+Basic 2 player pong game using [modern OpenGL](https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Introduction), [GLFW](http://www.glfw.org/)  and [GLEW](http://glew.sourceforge.net/).
 
 ## Movement
-first player **W** and **S**
-Second Player **UP ARROW** and **DOWN ARROW**
+1st player **W** and **S**
+2nd Player **UP ARROW** and **DOWN ARROW**
 
 ##TODO
 - [x] create paddles
