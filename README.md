@@ -2,8 +2,11 @@
 
 I'm a noob at graphics and I'm slow at this. 😟
 
+Using [visual studio](https://www.visualstudio.com/)
 
 Basic 2 player pong game using [modern OpenGL](https://en.wikibooks.org/wiki/OpenGL_Programming/Modern_OpenGL_Introduction), [GLFW](http://www.glfw.org/)  and [GLEW](http://glew.sourceforge.net/).
+
+
 
 ## Movement
 Player 1 **W** and **S**.
