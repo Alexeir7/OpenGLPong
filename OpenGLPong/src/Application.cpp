@@ -5,6 +5,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 #include <iostream>
+#include <fstream>
+#include <string>
+#include <sstream>
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -29,6 +32,81 @@ float racket_left_y = (HEIGHT - racket_height)/2;
 // right racket
 float racket_right_x = WIDTH - racket_width;
 float racket_right_y = (HEIGHT - racket_height) / 2;
+
+struct ShaderProgramSource {
+	std::string VertexSource;
+	std::string FragmentSource;
+};
+
+
+static ShaderProgramSource ParseShader(const std::string& filepath)
+{
+	std::ifstream stream(filepath);
+
+	enum class ShaderType
+	{
+		NONE = -1,
+		VERTEX = 0,
+		FRAGMENT = 1
+	};
+
+	std::string line;
+	std::stringstream ss[2];
+	ShaderType type = ShaderType::NONE;
+
+	while (getline(stream, line))
+	{
+		if (line.find("#shader") != std::string::npos)
+		{
+			if (line.find("vertex") != std::string::npos)
+				type = ShaderType::VERTEX;
+			else if (line.find("fragment") != std::string::npos)
+				type = ShaderType::FRAGMENT;
+		}
+		else
+		{
+			ss[(int)type] << line << '\n';
+		}
+	}
+	return { ss[0].str(), ss[1].str() };
+}
+
+
+static unsigned int CompileShader(unsigned int type, const std::string& source) {
+	unsigned int id = glCreateShader(type);
+	const char* src = source.c_str();
+	glShaderSource(id, 1, &src, nullptr);
+	glCompileShader(id);
+
+	int result;
+	glGetShaderiv(id, GL_COMPILE_STATUS, &result);
+	if (result == GL_FALSE) {
+		int length;
+		glGetShaderiv(id, GL_INFO_LOG_LENGTH, &length);
+		char* message = (char*)alloca(length * sizeof(char));
+		glGetShaderInfoLog(id, length, &length, message);
+		std::cout << "Failed to compile" << (type == GL_VERTEX_SHADER ? "vertex" : "fragment") << "shader!" << std::endl;
+		std::cout << message << std::endl;
+		glDeleteShader(id);
+		return 0;
+	}
+	return id;
+}
+
+static unsigned int CreateShader(const std::string& vertexShader, const std::string& fragmentShader) {
+	unsigned int program = glCreateProgram();
+	unsigned int vs = CompileShader(GL_VERTEX_SHADER, vertexShader);
+	unsigned int fs = CompileShader(GL_FRAGMENT_SHADER, fragmentShader);
+	glAttachShader(program, vs);
+	glAttachShader(program, fs);
+	glLinkProgram(program);
+	glValidateProgram(program);
+
+	glDeleteShader(vs);
+	glDeleteShader(fs);
+
+	return program;
+}
 
 int main(void)
 {
@@ -61,67 +139,15 @@ int main(void)
 
 	glEnable(GL_DEPTH_TEST);
 
-	// build and compile our shader
-	// ----------------------------
-	//vertex shader
-	const char *vertexShaderSource =
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0) in vec4 position;\n"
-		"\n"
-		"uniform mat4 projection;\n"
-		"uniform mat4 translate;\n"
-		"\n"
-		"void main()\n"
-		"{\n"
-		"gl_Position = projection * translate * vec4(position.x, position.y, 0.0, 1.0);\n"
-		"}\n\0";
+	ShaderProgramSource source = ParseShader("res/shaders/Shader.shader");
+	std::cout << "VERTEX" << std::endl;
+	std::cout << source.VertexSource << std::endl;
+	std::cout << "FRAGMENT" << std::endl;
+	std::cout << source.FragmentSource << std::endl;
 
-	unsigned int vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	glShaderSource(vertexShader, 1, &vertexShaderSource, NULL);
-	glCompileShader(vertexShader);
-	// chack for shader compile errors
-	int success;
-	char infoLog[512];
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-	// fragment shader
-	const char *fragmentShaderSource =
-		"#version 330 core\n"
-		"\n"
-		"layout(location = 0) out vec4 color;"
-		"\n"
-		"void main()\n"
-		"{\n"
-		"	color= vec4(1.0f, 0.5f, 0.2, 1.0);\n"
-		"}\n\0";
-	unsigned int fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
-	glShaderSource(fragmentShader, 1, &fragmentShaderSource, NULL);
-	glCompileShader(fragmentShader);
-	// chack for shader compile errors
-	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
-	if (!success)
-	{
-		glGetShaderInfoLog(vertexShader, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
-	}
-	// link shaders
-	int shaderProgram = glCreateProgram();
-	glAttachShader(shaderProgram, vertexShader);
-	glAttachShader(shaderProgram, fragmentShader);
-	glLinkProgram(shaderProgram);
-	// check for linking errors
-	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
-	if (!success) {
-		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
-		std::cout << "ERROR::SHADER::PROGRAM::LINKING_FAILED\n" << infoLog << std::endl;
-	}
-	glDeleteShader(vertexShader);
-	glDeleteShader(fragmentShader);
+	unsigned int shaderProgram = CreateShader(source.VertexSource, source.FragmentSource);
+	glUseProgram(shaderProgram);
+
 
 	// left racket position
 	float left_racket[8] =
@@ -202,7 +228,7 @@ int main(void)
 		// set translation matrix
 		glm::mat4 translateMatrix = glm::mat4(1.0f);
 		translateMatrix = glm::translate(translateMatrix, glm::vec3(0.0f, (float)move1, 0.0f));
-		unsigned int vertexTranslate = glGetUniformLocation(shaderProgram, "translate");
+		unsigned int vertexTranslate = glGetUniformLocation(shaderProgram, "model");
 		glUniformMatrix4fv(vertexTranslate, 1, GL_FALSE, glm::value_ptr(translateMatrix));
 
 		// draw first racket
